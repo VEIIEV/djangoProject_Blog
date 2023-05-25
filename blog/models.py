@@ -22,7 +22,9 @@ class Post(models.Model):
     #  related_name задают название связи
     author= models.ForeignKey(User,
                               on_delete=models.CASCADE,
-                              related_name='blog_posts')
+                              related_name='blog_posts'
+
+    )
 
     body = models.TextField(max_length=250)
     publish = models.DateTimeField(default=timezone.now())
