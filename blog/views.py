@@ -7,7 +7,7 @@ from django.core.paginator import Paginator
 def post_list(request):
     post_lists = Post.published.all()
     # создаем объект класс Paginator  с числом объектов на 1 странице
-    paginator = Paginator(post_lists(), 3)
+    paginator = Paginator(post_lists, 3)
     # вытягиваем значение параметра page из GET запроса, если он отсутствует, выставляем дефолтное 1
     #     MultiValueDict????
     page_number = request.GET.get('page', 1)
