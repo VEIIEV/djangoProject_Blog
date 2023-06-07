@@ -3,10 +3,11 @@ from django.shortcuts import render, get_object_or_404
 from django.http import Http404
 
 import djangoProject.settings
-from .models import Post
+from .models import Post, Comment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
-from .forms import EmailPostForm
+from .forms import EmailPostForm, CommentForm
+from django.views.decorators.http import require_POST
 
 
 class PostListView(ListView):
@@ -50,7 +51,15 @@ def post_detail(request, post, year, month, day):
                              publish__year=year,
                              publish__month=month,
                              publish__day=day)
-    return render(request, 'blog/post/details.html', {'post': post})
+    # Список активных комментариев к этому посту
+    comments = post.comments.filter(active=True)
+    # Форма для комментирования пользователями
+    form = CommentForm()
+
+    return render(request, 'blog/post/details.html', {'post': post,
+                                                      'comments': comments,
+                                                      'form': form})
+
 
 # представлени для 1)отображает изначальные данные на странице
 #                  2)обработка представленных для валидации данных
@@ -71,14 +80,14 @@ def post_share(request, post_id):
             # в cd = dict  в котором  находятся данные из формы,
             # где ключи =  названия формы и значение = содержание
             cd = form.cleaned_data
-            #непосредственно отправка письма
-            post_url=request.build_absolute_uri(
+            # непосредственно отправка письма
+            post_url = request.build_absolute_uri(
                 post.get_absolute_url()
             )
-            subject=f"{cd['name']} recommends you read {post}"
-            message= f"Mail send by {cd['email']}\n\n"\
-                    f"Read {post.title} at {post_url}\n\n" \
-                    f"{cd['name']}\'s comments: {cd['comments']}"
+            subject = f"{cd['name']} recommends you read {post}"
+            message = f"Mail send by {cd['email']}\n\n" \
+                      f"Read {post.title} at {post_url}\n\n" \
+                      f"{cd['name']}\'s comments: {cd['comments']}"
             send_mail(subject, message, djangoProject.settings.EMAIL_HOST_USER,
                       [cd['to']])
             sent = True
@@ -88,4 +97,28 @@ def post_share(request, post_id):
         # будет использоваться для отображения пустой формы в шаблоне
         form = EmailPostForm()
     return render(request, 'blog/post/share.html', {'post': post,
-                                                    'form': form})
+                                                    'form': form,
+                                                    'sent': sent})
+
+
+@require_POST
+def post_comment(request, post_id):
+    post = get_object_or_404(Post,
+                             id=post_id,
+                             status=Post.Status.PUBLISHED)
+    comment=None
+    #  Создается экземпляр формы, используя переданные на обработку POSTданные
+
+    form=CommentForm(data=request.POST)
+    if form.is_valid():
+        # Метод save() создает экземпляр модели, к которой форма привязана,
+        # и сохраняет его в базе данных. Если вызывать его, используя commit=False,
+        # то экземпляр модели создается, но не сохраняется в базе данных. Такой
+        # подход позволяет видоизменять объект перед его окончательным сохранением.
+        comment=form.save(commit=False)
+        comment.post=post
+        comment.save()
+    return render(request, 'blog/post/comment.html',
+                  {'post': post,
+                   'form': form,
+                   'comment': comment})
