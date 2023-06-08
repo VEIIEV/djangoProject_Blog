@@ -79,6 +79,9 @@ def post_share(request, post_id):
             # в шаблоне.
             # в cd = dict  в котором  находятся данные из формы,
             # где ключи =  названия формы и значение = содержание
+            # form.cleaned_data returns a dictionary of validated form input fields and their values, where string primary keys are returned as objects.
+            #
+            # form.data returns a dictionary of un-validated form input fields and their values in string format (i.e. not objects).
             cd = form.cleaned_data
             # непосредственно отправка письма
             post_url = request.build_absolute_uri(
@@ -106,17 +109,19 @@ def post_comment(request, post_id):
     post = get_object_or_404(Post,
                              id=post_id,
                              status=Post.Status.PUBLISHED)
-    comment=None
+    comment = None
     #  Создается экземпляр формы, используя переданные на обработку POSTданные
 
-    form=CommentForm(data=request.POST)
+    form = CommentForm(data=request.POST)
     if form.is_valid():
         # Метод save() создает экземпляр модели, к которой форма привязана,
         # и сохраняет его в базе данных. Если вызывать его, используя commit=False,
         # то экземпляр модели создается, но не сохраняется в базе данных. Такой
         # подход позволяет видоизменять объект перед его окончательным сохранением.
-        comment=form.save(commit=False)
-        comment.post=post
+
+        comment = form.save(commit=False)
+        print(comment.__dict__)
+        comment.post = post
         comment.save()
     return render(request, 'blog/post/comment.html',
                   {'post': post,
