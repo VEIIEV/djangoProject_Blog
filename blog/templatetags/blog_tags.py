@@ -21,7 +21,7 @@ def total_posts():
 def get_most_commented_posts(count=5):
     return Post.published.annotate(
         total_comments=Count('comments')
-    ).order_by('-total_comments')[:count]
+    ).exclude(total_comments=0).order_by('-total_comments')[:count]
 
 
 # "Шаблонный тег включения" возвращает словарь переменных
@@ -32,6 +32,7 @@ def get_most_commented_posts(count=5):
 def show_latest_posts(count=5):
     latest_posts = Post.published.order_by('-publish')[:count]
     return {'latest_posts': latest_posts}
+
 
 # создание фильтров
 @register.filter(name='markdown')
