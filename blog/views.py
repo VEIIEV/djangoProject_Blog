@@ -1,11 +1,12 @@
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Count
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 from taggit.models import Tag
 from django.contrib.postgres.search import SearchVector
+from django.contrib import messages
 
 import djangoProject.settings
 from .forms import EmailPostForm, CommentForm, SearchForm
@@ -163,3 +164,8 @@ def post_search(request):
                   {'form': form,
                    'query': query,
                    'results': results})
+
+# создал вьюшку редирект на главную страницу если введен некорректный url
+def redir_to_main_page(request, id):
+    messages.add_message(request, messages.INFO, 'you were redirected on main page')
+    return redirect('blog:post_list')

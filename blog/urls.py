@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, re_path
+
 from . import views
 from .feeds import LatestPostsFeed
 
@@ -15,4 +16,5 @@ urlpatterns = [
     path('<int:post_id>/comment/', views.post_comment, name='post_comment'),
     path('feeds/', LatestPostsFeed(), name='post_feed'),
     path('search/', views.post_search, name='post_search'),
+    re_path(r'(.*)', views.redir_to_main_page, name='redir_to_main_page'),
 ]
